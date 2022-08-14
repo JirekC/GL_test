@@ -1,0 +1,10 @@
+make.exe --dry-run --keep-going --print-directory
+make: Entering directory '/home/jiri.halmazna/GL_test'
+ 
+FIND: Parameter format not correct
+
+FIND: Parameter format not correct
+
+g++  -o build/GL.exe 
+make: Leaving directory '/home/jiri.halmazna/GL_test'
+ 

@@ -1,0 +1,345 @@
+make.exe all --print-data-base --no-builtin-variables --no-builtin-rules --question
+FIND: Parameter format not correct
+
+FIND: Parameter format not correct
+
+make: *** No rule to make target 'all'.  Stop.
+
+# GNU Make 4.2.1
+# Built for x86_64-unknown-cygwin
+# Copyright (C) 1988-2016 Free Software Foundation, Inc.
+# License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
+# This is free software: you are free to change and redistribute it.
+# There is NO WARRANTY, to the extent permitted by law.
+ 
+
+# Make data base, printed on Fri Jul 29 19:06:57 2022
+
+# Variables
+
+# 'override' directive
+ 
+GNUMAKEFLAGS := 
+# automatic
+<D = $(patsubst %/,%,$(dir $<))
+# automatic
+?F = $(notdir $?)
+# default
+.SHELLFLAGS := -c
+# makefile
+MAKEFLAGS = pqrR
+# automatic
+?D = $(patsubst %/,%,$(dir $?))
+# makefile (from 'Makefile', line 26)
+CPPFLAGS :=  -MMD -MP
+# environment
+PLATFORMIO_IDE = 2.5.1
+# automatic
+@D = $(patsubst %/,%,$(dir $@))
+# environment
+HOMEDRIVE = U:
+# automatic
+@F = $(notdir $@)
+# automatic
+^D = $(patsubst %/,%,$(dir $^))
+# makefile
+CURDIR := /home/jiri.halmazna/GL_test
+# default
+SHELL := /bin/sh
+# environment
+WINDIR = C:\Windows
+# environment
+VSCODE_NLS_CONFIG = {"locale":"en-us","availableLanguages":{},"_languagePackSupport":true}
+# environment
+COMMANDER_PATH = C:\01_AUSTIN\programs\tc
+# makefile (from 'Makefile', line 20)
+INC_DIRS := 
+# environment
+COMMANDER_INSTANCE = 1
+# environment
+PATHEXT = .COM;.EXE;.BAT;.CMD;.VBS;.VBE;.JS;.JSE;.WSF;.WSH;.MSC
+# makefile (from 'Makefile', line 1)
+MAKEFILE_LIST :=  Makefile
+# environment
+FPS_BROWSER_USER_PROFILE_STRING = Default
+# environment
+TMP = /cygdrive/c/Users/JIRI~1.HAL/AppData/Local/Temp
+# environment
+PROMPT = $P$G
+# environment
+PROGRAMW6432 = C:\Program Files
+# makefile (from 'Makefile', line 13)
+OBJS := 
+# 'override' directive
+.SHELLSTATUS := 2
+# environment
+PROGRAMDATA = C:\ProgramData
+# environment
+VSCODE_CWD = C:\cygwin64\home\jiri.halmazna\Fas_test
+# default
+MAKE_HOST := x86_64-unknown-cygwin
+# environment
+NO_PROXY = 127.0.0.1
+# environment
+COMMONPROGRAMW6432 = C:\Program Files\Common Files
+# environment
+ZES_ENABLE_SYSMAN = 1
+# environment
+LC_ALL = C
+# environment
+PROCESSOR_ARCHITECTURE = AMD64
+# environment
+VXIPNPPATH64 = C:\Program Files\IVI Foundation\VISA\
+# environment
+ONEDRIVE = C:\Users\jiri.halmazna\OneDrive
+# environment
+USERPROFILE = C:\Users\jiri.halmazna
+# environment
+!C: = c:\cygwin64\home\jiri.halmazna\GL_test
+# environment
+ALLUSERSPROFILE = C:\ProgramData
+# environment
+COMMANDER_INI = C:\Users\jiri.halmazna\AppData\Roaming\GHISLER\WINCMD.INI
+# environment
+NUMBER_OF_PROCESSORS = 12
+# environment
+ELECTRON_RUN_AS_NODE = 1
+# default
+.FEATURES := target-specific order-only second-expansion else-if shortest-stem undefine oneshell archives jobserver output-sync check-symlink guile load
+# automatic
+%F = $(notdir $%)
+# environment
+TNS_ADMIN = \network\admin\;\network\admin\
+# environment
+CHROME_CRASHPAD_PIPE_NAME = \\.\pipe\crashpad_7468_HCKRERKAHLYERWLC
+# makefile (from 'Makefile', line 5)
+SRC_DIRS := ./
+# environment
+COMPUTERNAME = CZ-HALMAZNAJ
+# makefile (from 'Makefile', line 22)
+INC_FLAGS := 
+# environment
+PROGRAMFILES = C:\Program Files
+# default
+.LOADED := 
+# environment
+USERDNSDOMAIN = AUSTIN.CZ
+# environment
+DRIVERDATA = C:\Windows\System32\Drivers\DriverData
+# environment
+ORIGINAL_XDG_CURRENT_DESKTOP = undefined
+# environment
+USERNAME = jiri.halmazna
+# environment
+PUBLIC = C:\Users\Public
+# environment
+VSCODE_AMD_ENTRYPOINT = vs/workbench/api/node/extensionHostProcess
+# environment
+HOME = /home/jiri.halmazna
+# environment
+VSCODE_CLI = 1
+# environment
+VSCODE_CODE_CACHE_PATH = C:\Users\jiri.halmazna\AppData\Roaming\Code\CachedData\b06ae3b2d2dbfe28bca3134cc6be65935cdfea6a
+# environment
+APPLICATION_INSIGHTS_NO_DIAGNOSTIC_CHANNEL = true
+# environment
+COMMONPROGRAMFILES = C:\Program Files\Common Files
+# environment
+LOGONSERVER = \\CZ-VSE-DC01
+# environment
+ONEDRIVECONSUMER = C:\Users\jiri.halmazna\OneDrive
+# environment
+VSCODE_HANDLES_UNCAUGHT_ERRORS = true
+# environment
+USERDOMAIN = AUSTIN
+# makefile (from 'Makefile', line 2)
+TARGET_EXEC := GL.exe
+# environment
+MAKELEVEL := 0
+# environment
+PLATFORMIO_PATH = C:\Users\jiri.halmazna\.platformio\penv\Scripts;C:\Users\jiri.halmazna\.platformio\penv;C:\Users\jiri.halmazna\.platformio\python3;C:\app\64\product\11.2.0\client_1\bin;C:\app\32\product\11.2.0\client_1\bin;C:\Program Files (x86)\Common Files\Oracle\Java\javapath;C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0\;C:\Windows\System32\OpenSSH\;C:\Users\admkubicek\AppData\Local\Microsoft\WindowsApps;C:\Program Files\7-Zip;c:\Program Files (x86)\Microsoft SQL Server\110\Tools\Binn\;c:\Program Files\Microsoft SQL Server\110\Tools\Binn\;c:\Program Files\Microsoft SQL Server\110\DTS\Binn\;C:\Program Files\SafeNet\Authentication\SAC\x64;C:\Program Files\SafeNet\Authentication\SAC\x32;C:\Program Files (x86)\Microchip\xc8\v2.10\bin;C:\Program Files\Microchip\xc16\v1.50\bin;C:\Program Files (x86)\IVI Foundation\VISA\WinNT\Bin\;C:\Program Files\IVI Foundation\VISA\Win64\Bin\;C:\Program Files (x86)\IVI Foundation\VISA\WinNT\Bin;C;C:\Program Files\Microchip\xc16\v1.70\bin;C;C:\Program Files\Microchip\xc8\v2.35\bin;C:\Program Files\PuTTY\;C:\Program Files\Microsoft SQL Server\130\Tools\Binn\;C:\Users\jiri.halmazna\AppData\Local\Microsoft\WindowsApps;C:\Users\jiri.halmazna\AppData\Local\Programs\Microsoft VS Code\bin;c:\cygwin64\bin;C:\app\64\product\11.2.0\client_1\bin;C:\app\32\product\11.2.0\client_1\bin;C:\Program Files (x86)\Common Files\Oracle\Java\javapath;C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0\;C:\Windows\System32\OpenSSH\;C:\Users\admkubicek\AppData\Local\Microsoft\WindowsApps;C:\Program Files\7-Zip;c:\Program Files (x86)\Microsoft SQL Server\110\Tools\Binn\;c:\Program Files\Microsoft SQL Server\110\Tools\Binn\;c:\Program Files\Microsoft SQL Server\110\DTS\Binn\;C:\Program Files\SafeNet\Authentication\SAC\x64;C:\Program Files\SafeNet\Authentication\SAC\x32;C:\Program Files (x86)\Microchip\xc8\v2.10\bin;C:\Program Files\Microchip\xc16\v1.50\bin;C:\Program Files (x86)\IVI Foundation\VISA\WinNT\Bin\;C:\Program Files\IVI Foundation\VISA\Win64\Bin\;C:\Program Files (x86)\IVI Foundation\VISA\WinNT\Bin;C;C:\Program Files\Microchip\xc16\v1.70\bin;C;C:\Program Files\Microchip\xc8\v2.35\bin;C:\Program Files\PuTTY\;C:\Program Files\Microsoft SQL Server\130\Tools\Binn\;C:\Users\jiri.halmazna\AppData\Local\Microsoft\WindowsApps;C:\Users\jiri.halmazna\AppData\Local\Programs\Microsoft VS Code\bin;c:\cygwin64\bin
+# default
+MAKE = $(MAKE_COMMAND)
+# default
+MAKECMDGOALS := all
+# environment
+PATH = /cygdrive/c/app/64/product/11.2.0/client_1/bin:/cygdrive/c/app/32/product/11.2.0/client_1/bin:/cygdrive/c/Program Files (x86)/Common Files/Oracle/Java/javapath:/cygdrive/c/Windows/system32:/cygdrive/c/Windows:/cygdrive/c/Windows/System32/Wbem:/cygdrive/c/Windows/System32/WindowsPowerShell/v1.0:/cygdrive/c/Windows/System32/OpenSSH:/cygdrive/c/Users/admkubicek/AppData/Local/Microsoft/WindowsApps:/cygdrive/c/Program Files/7-Zip:/cygdrive/c/Program Files (x86)/Microsoft SQL Server/110/Tools/Binn:/cygdrive/c/Program Files/Microsoft SQL Server/110/Tools/Binn:/cygdrive/c/Program Files/Microsoft SQL Server/110/DTS/Binn:/cygdrive/c/Program Files/SafeNet/Authentication/SAC/x64:/cygdrive/c/Program Files/SafeNet/Authentication/SAC/x32:/cygdrive/c/Program Files (x86)/Microchip/xc8/v2.10/bin:/cygdrive/c/Program Files/Microchip/xc16/v1.50/bin:/cygdrive/c/Program Files (x86)/IVI Foundation/VISA/WinNT/Bin:/cygdrive/c/Program Files/IVI Foundation/VISA/Win64/Bin:/cygdrive/c/Program Files (x86)/IVI Foundation/VISA/WinNT/Bin:C:/cygdrive/c/Program Files/Microchip/xc16/v1.70/bin:C:/cygdrive/c/Program Files/Microchip/xc8/v2.35/bin:/cygdrive/c/Program Files/PuTTY:/cygdrive/c/Program Files/Microsoft SQL Server/130/Tools/Binn:/cygdrive/c/Users/jiri.halmazna/AppData/Local/Microsoft/WindowsApps:/cygdrive/c/Users/jiri.halmazna/AppData/Local/Programs/Microsoft VS Code/bin:/usr/bin
+# makefile (from 'Makefile', line 9)
+SRCS := $(subst ,, )
+# makefile (from 'Makefile', line 4)
+BUILD_DIR := ./build
+# default
+MAKE_VERSION := 4.2.1
+# makefile
+.DEFAULT_GOAL := build/GL.exe
+# environment
+PROGRAMFILES(X86) = C:\Program Files (x86)
+# automatic
+%D = $(patsubst %/,%,$(dir $%))
+# environment
+LOCALAPPDATA = C:\Users\jiri.halmazna\AppData\Local
+# environment
+PSMODULEPATH = %ProgramFiles%\WindowsPowerShell\Modules;C:\Windows\system32\WindowsPowerShell\v1.0\Modules;c:\Program Files (x86)\Microsoft SQL Server\110\Tools\PowerShell\Modules\
+# default
+MAKE_COMMAND := make
+# default
+.VARIABLES := 
+# automatic
+*F = $(notdir $*)
+# environment
+PROCESSOR_IDENTIFIER = Intel64 Family 6 Model 165 Stepping 2, GenuineIntel
+# environment
+OS = Windows_NT
+# environment
+VSCODE_IPC_HOOK = \\.\pipe\d5aec74266e02bbe1e86b46a9f20d235-1.69.1-main-sock
+# environment
+HOMEPATH = \
+# environment
+COMMONPROGRAMFILES(X86) = C:\Program Files (x86)\Common Files
+ 
+# environment
+HOMESHARE = \\austin.cz\cz\AD\HOME\jiri.halmazna
+# environment
+MFLAGS = -pqrR
+# automatic
+*D = $(patsubst %/,%,$(dir $*))
+# environment
+SYSTEMROOT = C:\Windows
+# automatic
++D = $(patsubst %/,%,$(dir $+))
+# automatic
++F = $(notdir $+)
+# environment
+APPDATA = C:\Users\jiri.halmazna\AppData\Roaming
+# environment
+VXIPNPPATH = C:\Program Files (x86)\IVI Foundation\VISA\
+# environment
+TEMP = /cygdrive/c/Users/JIRI~1.HAL/AppData/Local/Temp
+# environment
+COMSPEC = C:\Windows\system32\cmd.exe
+# environment
+COMMANDER_EXE = C:\01_AUSTIN\programs\tc\TOTALCMD64.EXE
+# default
+MAKEFILES := 
+# automatic
+<F = $(notdir $<)
+# environment
+PLATFORMIO_CALLER = vscode
+# environment
+COMMANDER_DRIVE = C:
+# environment
+ELECTRON_NO_ATTACH_CONSOLE = 1
+# automatic
+^F = $(notdir $^)
+# makefile (from 'Makefile', line 17)
+DEPS := 
+# default
+SUFFIXES := 
+# environment
+SYSTEMDRIVE = C:
+# environment
+SESSIONNAME = Console
+# environment
+PROCESSOR_REVISION = a502
+# default
+.INCLUDE_DIRS = /usr/include /usr/include
+# default
+.RECIPEPREFIX := 
+# environment
+LANG = C
+# environment
+PROCESSOR_LEVEL = 6
+# environment
+TERM = xterm-256color
+# environment
+FPS_BROWSER_APP_PROFILE_STRING = Internet Explorer
+# environment
+VSCODE_PID = 7468
+# environment
+USERDOMAIN_ROAMINGPROFILE = AUSTIN
+# variable set hash-table stats:
+# Load=119/1024=12%, Rehash=0, Collisions=33/161=20%
+
+# Pattern-specific Variable Values
+
+# No pattern-specific variable values.
+
+# Directories
+
+# . (device 3390013236, inode 42784196460052431): 10 files, no impossibilities.
+
+# 10 files, no impossibilities in 1 directories.
+
+# Implicit Rules
+
+build/%.c.o: %.c
+#  recipe to execute (from 'Makefile', line 34):
+	mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
+
+build/%.cpp.o: %.cpp
+#  recipe to execute (from 'Makefile', line 39):
+	mkdir -p $(dir $@)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
+
+# 2 implicit rules, 0 (0.0%) terminal.
+
+# Files
+
+# Not a target:
+all:
+#  Command line target.
+#  Implicit rule search has been done.
+#  File does not exist.
+#  File has not been updated.
+
+.PHONY: clean
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+
+# Not a target:
+Makefile:
+#  Implicit rule search has been done.
+#  Last modified 2022-07-29 16:23:04.2351406
+#  File has been updated.
+#  Successfully updated.
+
+# Not a target:
+.DEFAULT:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+
+build/GL.exe:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from 'Makefile', line 30):
+	$(CXX) $(OBJS) -o $@ $(LDFLAGS)
+
+clean:
+#  Phony target (prerequisite of .PHONY).
+#  Implicit rule search has not been done.
+#  File does not exist.
+#  File has not been updated.
+#  recipe to execute (from 'Makefile', line 45):
+	rm -r $(BUILD_DIR)
+
+# files hash-table stats:
+# Load=7/1024=1%, Rehash=0, Collisions=0/19=0%
+# VPATH Search Paths
+
+# No 'vpath' search paths.
+
+# No general ('VPATH' variable) search path.
+
+# strcache buffers: 1 (0) / strings = 21 / storage = 170 B / avg = 8 B
+# current buf: size = 8162 B / used = 170 B / count = 21 / avg = 8 B
+
+# strcache performance: lookups = 29 / hit rate = 27%
+# hash-table stats:
+# Load=21/8192=0%, Rehash=0, Collisions=1/29=3%
+# Finished Make data base on Fri Jul 29 19:06:57 2022
+
+ 
