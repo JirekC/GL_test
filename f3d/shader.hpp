@@ -1,4 +1,5 @@
-#pragma once
+#ifndef SHADER_HPP
+#define SHADER_HPP
 
 #include <glad/glad.h> // include glad to get the required OpenGL headers
 #include <glm/glm.hpp>
@@ -119,12 +120,16 @@ namespace f3d {
 			glUniform1f(glGetUniformLocation(ID, name), value);
 		}
 
-		void setUniform(const char* name, glm::mat4& value) const {
+		void setUniform(const char* name, const glm::mat4& value) const {
 			glUniformMatrix4fv(glGetUniformLocation(ID, name), 1, GL_FALSE, glm::value_ptr(value));
 		}
 
-		void setUniform(const char* name, glm::vec4& value) const {
+		void setUniform(const char* name, const glm::vec4& value) const {
 			glUniform4fv(glGetUniformLocation(ID, name), 1, glm::value_ptr(value));
+		}
+
+		void setUniform(const char* name, const glm::vec3& value) const {
+			glUniform3fv(glGetUniformLocation(ID, name), 1, glm::value_ptr(value));
 		}
 
 		void setUniform(int UID, bool value) const {
@@ -139,14 +144,20 @@ namespace f3d {
 			glUniform1f(UID, value);
 		}
 
-		void setUniform(int UID, glm::mat4& value) const {
+		void setUniform(int UID, const glm::mat4& value) const {
 			glUniformMatrix4fv(UID, 1, GL_FALSE, glm::value_ptr(value));
 		}
 
-		void setUniform(int UID, glm::vec4& value) const {
+		void setUniform(int UID, const glm::vec4& value) const {
 			glUniform4fv(UID, 1, glm::value_ptr(value));
+		}
+
+		void setUniform(int UID, const glm::vec3& value) const {
+			glUniform3fv(UID, 1, glm::value_ptr(value));
 		}
 
 	};
 
 }
+
+#endif

@@ -1,4 +1,6 @@
-#pragma once
+#ifndef RENDER_HPP
+#define RENDER_HPP
+
 #include <iostream>
 #include <vector>
 #include <glm/glm.hpp> // OpenGL math (C++ wrap)
@@ -28,3 +30,4 @@ namespace f3d {
 
 }
 
+#endif

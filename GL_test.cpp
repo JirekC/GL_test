@@ -9,9 +9,12 @@
 #include <glm/glm.hpp> // OpenGL math (C++ wrap)
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include "f3d/scanner.hpp"
+#include "f3d/grid.hpp"
+#include "f3d/object_creator.hpp"
+
 #include "f3d/shader.hpp"
-#include "f3d/field_render.hpp"
-#include "f3d/field_data.hpp"
+#include "f3d/driver_data.hpp"
 #include "f3d/object_render.hpp"
 
 
@@ -122,22 +125,126 @@ int main()
 
 	glEnable(GL_PROGRAM_POINT_SIZE); // vertex shader can control point size
 	glEnable(GL_DEPTH_TEST); // using z-buffer
+	glEnable(GL_BLEND); // transparency enable
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // ...
 
-	f3d::field_data data("../FAS_test/data0"); // TODO: from cmd line
-	f3d::field_render field_render("f3d/vertex_field.glsl", "f3d/fragment.glsl");;
-	field_render.setPositions(data.positions);
+	f3d::shader scanner_shader("f3d/vertex_scanner.glsl", "f3d/fragment_scanner.glsl"); // common shader for all scanners
+	f3d::scanner scanner1(	scanner_shader,
+							{0,0,128}, // TODO: parse from .json
+							{0.0f,0.0f,0.0f},
+							{512, 512},
+							"../FAS_test/data0.f32", 10);
 	
 	// adjust move / frame-inc / rotate speed
-	auto sc_size = data.getSceneSize();
+	auto sc_size = glm::vec3({512,512,256}); //data.getSceneSize();
 	float scene_max_dim = std::max(std::max(sc_size.x, sc_size.y), sc_size.z); // maximal dimmension of scene
 	float cameraSpeed = 0.35f * scene_max_dim; // adjust accordingly to scene size TODO: let user to adjust
 	float rotationSpeed = M_PI * 0.5f; // 6.28 rad per 4 sec (by arrows on keyboard)
-	num_frames = data.num_frames;
+	num_frames = scanner1.num_frames * scanner1.store_every_nth_frame;
+
+	f3d::shader grid_shader("f3d/vertex_grid.glsl", "f3d/fragment.glsl"); // common grid shader
+	f3d::grid grid1(grid_shader);
+	grid1.Prepare(sc_size, {10.0f,10.0f,10.0f}); // todo: adjustable grid ?
+	// TODO: multiply by "dx" to obtain [m] instead of simulation units
+	std::cout << "Grid spacing [simulation units - dx]\nx: " << 
+		std::to_string(grid1.line_spacing.x) << "\ny: " <<
+		std::to_string(grid1.line_spacing.y) << "\nz: " <<
+		std::to_string(grid1.line_spacing.z) << "\n";
+
+	f3d::shader object_shader("f3d/vertex_object.glsl", "f3d/fragment.glsl");
+	// only for testing of lighting:
+	std::vector<float> vertices ({
+    -0.5f, -0.5f, -0.5f,
+     0.5f, -0.5f, -0.5f, 
+     0.5f,  0.5f, -0.5f, 
+     0.5f,  0.5f, -0.5f, 
+    -0.5f,  0.5f, -0.5f, 
+    -0.5f, -0.5f, -0.5f, 
+
+    -0.5f, -0.5f,  0.5f,
+     0.5f, -0.5f,  0.5f,
+     0.5f,  0.5f,  0.5f,
+     0.5f,  0.5f,  0.5f,
+    -0.5f,  0.5f,  0.5f,
+    -0.5f, -0.5f,  0.5f,
+
+    -0.5f,  0.5f,  0.5f,
+    -0.5f,  0.5f, -0.5f,
+    -0.5f, -0.5f, -0.5f,
+    -0.5f, -0.5f, -0.5f,
+    -0.5f, -0.5f,  0.5f,
+    -0.5f,  0.5f,  0.5f,
+
+     0.5f,  0.5f,  0.5f,
+     0.5f,  0.5f, -0.5f,
+     0.5f, -0.5f, -0.5f,
+     0.5f, -0.5f, -0.5f,
+     0.5f, -0.5f,  0.5f,
+     0.5f,  0.5f,  0.5f,
+
+    -0.5f, -0.5f, -0.5f,
+     0.5f, -0.5f, -0.5f,
+     0.5f, -0.5f,  0.5f,
+     0.5f, -0.5f,  0.5f,
+    -0.5f, -0.5f,  0.5f,
+    -0.5f, -0.5f, -0.5f,
+
+    -0.5f,  0.5f, -0.5f,
+     0.5f,  0.5f, -0.5f,
+     0.5f,  0.5f,  0.5f,
+     0.5f,  0.5f,  0.5f,
+    -0.5f,  0.5f,  0.5f,
+    -0.5f,  0.5f, -0.5f
+	});
+	std::vector<float> normals ({
+	0.0f,  0.0f, -1.0f,
+	0.0f,  0.0f, -1.0f,
+	0.0f,  0.0f, -1.0f,
+	0.0f,  0.0f, -1.0f,
+	0.0f,  0.0f, -1.0f,
+	0.0f,  0.0f, -1.0f,
+	0.0f,  0.0f, 1.0f,
+	0.0f,  0.0f, 1.0f,
+	0.0f,  0.0f, 1.0f,
+	0.0f,  0.0f, 1.0f,
+	0.0f,  0.0f, 1.0f,
+	0.0f,  0.0f, 1.0f,
+	-1.0f,  0.0f,  0.0f,
+	-1.0f,  0.0f,  0.0f,
+	-1.0f,  0.0f,  0.0f,
+	-1.0f,  0.0f,  0.0f,
+	-1.0f,  0.0f,  0.0f,
+	-1.0f,  0.0f,  0.0f,
+	1.0f,  0.0f,  0.0f,
+	1.0f,  0.0f,  0.0f,
+	1.0f,  0.0f,  0.0f,
+	1.0f,  0.0f,  0.0f,
+	1.0f,  0.0f,  0.0f,
+	1.0f,  0.0f,  0.0f,
+	0.0f, -1.0f,  0.0f,
+	0.0f, -1.0f,  0.0f,
+	0.0f, -1.0f,  0.0f,
+	0.0f, -1.0f,  0.0f,
+	0.0f, -1.0f,  0.0f,
+	0.0f, -1.0f,  0.0f,
+	0.0f,  1.0f,  0.0f,
+	0.0f,  1.0f,  0.0f,
+	0.0f,  1.0f,  0.0f,
+	0.0f,  1.0f,  0.0f,
+	0.0f,  1.0f,  0.0f,
+	0.0f,  1.0f,  0.0f
+	});
+	std::vector<unsigned int> indices({
+		0, 1, 2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,
+		21,22,23,24,25,26,27,28,29,30,31,32,33,34,35
+	});
+	auto mmm = new f3d::object_3d_vi({vertices, normals, indices});
+	f3d::object3d object1(object_shader, mmm);//f3d::loader::LoadSTL("../two_obj.stl"));
 
 	f3d::data drv_elements("../FAS_test/driver"); // TODO: from cmd line
-	f3d::object_render object_render("f3d/vertex_object.glsl", "f3d/fragment.glsl");
+	f3d::object_render object_render("f3d/vertex_driver_old.glsl", "f3d/fragment.glsl");
 	object_render.setPositions(drv_elements.positions);
-	object_render.setColor({ 1.0f,0.0f,0.0f,1.0f }); // red
+	object_render.setColor({ 1.0f,1.0f,0.0f,1.0f }); // yellow
 
 	int nbFrames = 0;
 	float lastTime = 0.0f;
@@ -234,25 +341,25 @@ int main()
 		direction.y = sin(cam_pitch);
 		direction.z = sin(cam_yaw) * cos(cam_pitch);
 		cam_front = glm::normalize(direction);
-
 		glm::mat4 camera = glm::lookAt(cam_pos, cam_pos + cam_front, cam_up);
 		glm::ivec4 viewport;
 		glGetIntegerv(GL_VIEWPORT, &viewport.x); // get viewport position and size
 		glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)viewport.z / viewport.w, 1.0f, 2.0f * scene_max_dim);
 		camera = projection * camera;
-		field_render.setView(camera);
 		object_render.setView(camera);
 		
 		if (last_frame != frame)
 		{
 			// not same frame, load new values from file
-			field_render.setValues(data, frame);
+			scanner1.load_frame(frame);
 			last_frame = frame;
 		}
 
 		// render
-		field_render.Draw();
+		grid1.Draw(camera);
 		object_render.Draw();
+		scanner1.Draw(camera);
+		object1.Draw(camera);
 
 		// check and call events and swap the buffers
 		glfwSwapBuffers(window);
