@@ -12,7 +12,6 @@ namespace f3d {
     {
         std::vector<float> vertices; // format: {x, y, z} for each vertice
         std::vector<float> normals; // normal vector for each vertice, format: {x, y, z}
-        std::vector<unsigned int> indices; // format: 3 consecutive vertices per triangle
     };
     
     namespace loader {
@@ -33,7 +32,7 @@ namespace f3d {
 		// OpenGL
 		shader* _shader;
 		unsigned int vao; // Vertex Array Object ID
-		unsigned int buff[3]; // vertices, normals, indices (EBO)
+		unsigned int buff[2]; // vertices, normals
 	    size_t nr_of_vertices = 0; // total nr of vertices in final model
 
 		object3d(shader& object_shader) { _shader = &object_shader; }
@@ -55,7 +54,7 @@ namespace f3d {
                     glm::u32vec3 size,
                     glm::vec4 color = {0.8f, 0.8f, 0.8f, 1.0f});
 
-        void Draw(const glm::mat4& view_matrix);
+        void Draw(const glm::mat4& view_matrix, const glm::vec3& light_pos = {0,0,0});
 
     };
     

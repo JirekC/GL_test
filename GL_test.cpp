@@ -96,6 +96,29 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 		frame += inc;
 }
 
+void printProgramInfo(GLuint nProgram)
+{
+    
+	int nLen = 0;
+	int nWrittn = 0;
+	char* chLog = nullptr;
+	glGetProgramiv(nProgram, GL_INFO_LOG_LENGTH, &nLen);
+	if (nLen > 0)
+	{
+    
+		chLog = (char*)malloc(nLen);
+		if (!chLog)
+		{
+    
+			std::cout << "Allocate memory failed! Invoke malloc()." << std::endl;
+			return;
+		}
+		glGetProgramInfoLog(nProgram, nLen, &nWrittn, chLog);
+		std::cout << "Program infomation log:" << chLog << std::endl;
+		free(chLog);
+	}
+}
+
 // main entry :)
 int main()
 {
@@ -127,6 +150,9 @@ int main()
 	glEnable(GL_DEPTH_TEST); // using z-buffer
 	glEnable(GL_BLEND); // transparency enable
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // ...
+	glEnable(GL_CULL_FACE); // TODO: remove, because scanner uses both sides of textured plane
+	glCullFace(GL_FRONT);
+	glFrontFace(GL_CW);
 
 	f3d::shader scanner_shader("f3d/vertex_scanner.glsl", "f3d/fragment_scanner.glsl"); // common shader for all scanners
 	f3d::scanner scanner1(	scanner_shader,
@@ -151,95 +177,8 @@ int main()
 		std::to_string(grid1.line_spacing.y) << "\nz: " <<
 		std::to_string(grid1.line_spacing.z) << "\n";
 
-	f3d::shader object_shader("f3d/vertex_object.glsl", "f3d/fragment.glsl");
-	// only for testing of lighting:
-	std::vector<float> vertices ({
-    -0.5f, -0.5f, -0.5f,
-     0.5f, -0.5f, -0.5f, 
-     0.5f,  0.5f, -0.5f, 
-     0.5f,  0.5f, -0.5f, 
-    -0.5f,  0.5f, -0.5f, 
-    -0.5f, -0.5f, -0.5f, 
-
-    -0.5f, -0.5f,  0.5f,
-     0.5f, -0.5f,  0.5f,
-     0.5f,  0.5f,  0.5f,
-     0.5f,  0.5f,  0.5f,
-    -0.5f,  0.5f,  0.5f,
-    -0.5f, -0.5f,  0.5f,
-
-    -0.5f,  0.5f,  0.5f,
-    -0.5f,  0.5f, -0.5f,
-    -0.5f, -0.5f, -0.5f,
-    -0.5f, -0.5f, -0.5f,
-    -0.5f, -0.5f,  0.5f,
-    -0.5f,  0.5f,  0.5f,
-
-     0.5f,  0.5f,  0.5f,
-     0.5f,  0.5f, -0.5f,
-     0.5f, -0.5f, -0.5f,
-     0.5f, -0.5f, -0.5f,
-     0.5f, -0.5f,  0.5f,
-     0.5f,  0.5f,  0.5f,
-
-    -0.5f, -0.5f, -0.5f,
-     0.5f, -0.5f, -0.5f,
-     0.5f, -0.5f,  0.5f,
-     0.5f, -0.5f,  0.5f,
-    -0.5f, -0.5f,  0.5f,
-    -0.5f, -0.5f, -0.5f,
-
-    -0.5f,  0.5f, -0.5f,
-     0.5f,  0.5f, -0.5f,
-     0.5f,  0.5f,  0.5f,
-     0.5f,  0.5f,  0.5f,
-    -0.5f,  0.5f,  0.5f,
-    -0.5f,  0.5f, -0.5f
-	});
-	std::vector<float> normals ({
-	0.0f,  0.0f, -1.0f,
-	0.0f,  0.0f, -1.0f,
-	0.0f,  0.0f, -1.0f,
-	0.0f,  0.0f, -1.0f,
-	0.0f,  0.0f, -1.0f,
-	0.0f,  0.0f, -1.0f,
-	0.0f,  0.0f, 1.0f,
-	0.0f,  0.0f, 1.0f,
-	0.0f,  0.0f, 1.0f,
-	0.0f,  0.0f, 1.0f,
-	0.0f,  0.0f, 1.0f,
-	0.0f,  0.0f, 1.0f,
-	-1.0f,  0.0f,  0.0f,
-	-1.0f,  0.0f,  0.0f,
-	-1.0f,  0.0f,  0.0f,
-	-1.0f,  0.0f,  0.0f,
-	-1.0f,  0.0f,  0.0f,
-	-1.0f,  0.0f,  0.0f,
-	1.0f,  0.0f,  0.0f,
-	1.0f,  0.0f,  0.0f,
-	1.0f,  0.0f,  0.0f,
-	1.0f,  0.0f,  0.0f,
-	1.0f,  0.0f,  0.0f,
-	1.0f,  0.0f,  0.0f,
-	0.0f, -1.0f,  0.0f,
-	0.0f, -1.0f,  0.0f,
-	0.0f, -1.0f,  0.0f,
-	0.0f, -1.0f,  0.0f,
-	0.0f, -1.0f,  0.0f,
-	0.0f, -1.0f,  0.0f,
-	0.0f,  1.0f,  0.0f,
-	0.0f,  1.0f,  0.0f,
-	0.0f,  1.0f,  0.0f,
-	0.0f,  1.0f,  0.0f,
-	0.0f,  1.0f,  0.0f,
-	0.0f,  1.0f,  0.0f
-	});
-	std::vector<unsigned int> indices({
-		0, 1, 2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,
-		21,22,23,24,25,26,27,28,29,30,31,32,33,34,35
-	});
-	auto mmm = new f3d::object_3d_vi({vertices, normals, indices});
-	f3d::object3d object1(object_shader, mmm);//f3d::loader::LoadSTL("../two_obj.stl"));
+	f3d::shader object_shader("f3d/vertex_object.glsl", "f3d/fragment_object.glsl");
+	f3d::object3d object1(object_shader, f3d::loader::LoadSTL("../two_obj.stl"));
 
 	f3d::data drv_elements("../FAS_test/driver"); // TODO: from cmd line
 	f3d::object_render object_render("f3d/vertex_driver_old.glsl", "f3d/fragment.glsl");
@@ -266,6 +205,14 @@ int main()
 		
 		if (cmd_flag > 0)
 		{
+			if(cmd_line == "ge")
+			{
+				std::cout << "Last error: " << std::to_string(glGetError()) << "\n";
+			}
+			else if (cmd_line == "gi")
+			{
+				printProgramInfo(object_shader.ID);
+			}
 			std::cout << cmd_line << std::endl; // TODO: parse & do command
 			cmd_flag = 0;
 		}
@@ -358,8 +305,8 @@ int main()
 		// render
 		grid1.Draw(camera);
 		object_render.Draw();
-		scanner1.Draw(camera);
-		object1.Draw(camera);
+//		scanner1.Draw(camera);
+		object1.Draw(camera, cam_pos);
 
 		// check and call events and swap the buffers
 		glfwSwapBuffers(window);

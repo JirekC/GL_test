@@ -34,7 +34,6 @@ object_3d_vi* loader::LoadSTL(const char* path)
         data_file.read((char*)&nr_of_triangles, 4); // assume little-endian machine (x86 is)
         model->vertices.reserve(nr_of_triangles * 3 * 3); // 3 vertices * 3 coordinates per triangle
         model->normals.reserve(nr_of_triangles * 3 * 3);
-        model->indices.reserve(nr_of_triangles * 3); // memory waste, but ..
         // for each triangle
         for(uint32_t i = 0; i < nr_of_triangles; i++)
         {
@@ -47,9 +46,6 @@ object_3d_vi* loader::LoadSTL(const char* path)
             model->normals.insert(model->normals.end(), norm_vec, norm_vec + 3); // same normal for each vertice in STL
             model->normals.insert(model->normals.end(), norm_vec, norm_vec + 3);
             model->normals.insert(model->normals.end(), norm_vec, norm_vec + 3);
-            model->indices.push_back(indices_cntr++); // SLT does not use indices (each triangle has separated 3 vertices)
-            model->indices.push_back(indices_cntr++); // so simply storing 0, 1, 2 ... for indices when loading from STL
-            model->indices.push_back(indices_cntr++);
         }
         data_file.close();
     }
@@ -75,7 +71,7 @@ void object3d::Prepare( object_3d_vi* model,
 
     glGenVertexArrays(1, &vao);
 	glBindVertexArray(vao); // bind Vertex Array Object
-	glGenBuffers(3, buff);
+	glGenBuffers(2, buff);
 	// vertices
 	glBindBuffer(GL_ARRAY_BUFFER, buff[0]); // copy vertices array to buffer for OpenGL use
 	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * model->vertices.size(), model->vertices.data(), GL_STATIC_DRAW);
@@ -98,17 +94,14 @@ void object3d::Prepare( object_3d_vi* model,
         GL_FLOAT,
         GL_FALSE,
         3 * sizeof(float), // space between consecutive normal attributes
-        (void*)(3 * sizeof(float)) // offset of this attribute in vertices "structure"
+        (void*)0 // offset of this attribute in vertices "structure"
     );
     glEnableVertexAttribArray(1);
-    // indices
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buff[2]);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * model->indices.size(), model->indices.data(), GL_STATIC_DRAW);
-    nr_of_vertices = model->indices.size(); // yes, total number of vertices in final model is equal to nr of indices
-    delete model; // no more needed, everythinh is in GPU
+    nr_of_vertices = model->vertices.size();
+//    delete model; // no more needed, everythinh is in GPU
 }
 
-void object3d::Draw(const glm::mat4& view_matrix)
+void object3d::Draw(const glm::mat4& view_matrix, const glm::vec3& light_pos)
 {
     _shader->use();
     // Create transformationmatrix from rotation, size and position(translation)
@@ -117,10 +110,13 @@ void object3d::Draw(const glm::mat4& view_matrix)
     trans = glm::translate(trans, position);
     trans = f3d::RotationMatrix(rotation) * trans;
     trans = glm::scale(trans, size);
-    _shader->setUniform("view", view_matrix * trans);
+    _shader->setUniform("view", view_matrix);
+    _shader->setUniform("transform", trans);
     _shader->setUniform("color", color);
-    _shader->setUniform("light_pos", glm::vec3({256,256,256})); // TODO: use real value
+    _shader->setUniform("light_pos", light_pos);
 
     glBindVertexArray(vao);
-    glDrawElements(GL_TRIANGLES, nr_of_vertices, GL_UNSIGNED_INT, 0);
+    // glPolygonMode(GL_FRONT_AND_BACK,GL_LINE); // wireframe
+    // glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
+    glDrawArrays(GL_TRIANGLES, 0, nr_of_vertices);
 }

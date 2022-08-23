@@ -1,21 +1,17 @@
 #version 330 core
 
-layout (location = 0) in vec3 model; // position of vertices in model (cube)
-layout (location = 1) in vec3 normal; // offset of model (cube) instance in instanced array
-
+layout (location = 0) in vec3 model; // vertex
+layout (location = 1) in vec3 normal; // normal vector
 uniform mat4 view;
-uniform vec4 color;
-uniform vec3 light_pos;
+uniform mat4 transform; // model rotate, scale, translate
 
-out vec4 vertexColor; // color output to the fragment shader
+out vec3 fragment_pos;  // forwarding vertex position in space - before view matrix application
+out vec3 normal_vec;	// forwarding normalized normal-vector
 
 void main()
 {
-	gl_Position = view * vec4( model.x, model.y, model.z, 1.0f );
-	//gl_PointSize = 10 * (5 - gl_Position.z); // size of point if GL_POINTS draw style selected
-	vec3 norm = normalize(normal);
-	vec3 lightDir = normalize(light_pos - vec3(gl_Position)); 
-	float diff = max(dot(norm, lightDir), 0.0);
-	vec3 diffuse = diff * vec3(1.0f); // while light
-	vertexColor = vec4(vec3(diffuse * vec3(color)), color.w);
+	vec4 fp = transform * vec4(model, 1.0f); // position in space
+	fragment_pos = vec3(fp);
+	gl_Position = view * fp; // view from camera
+	normal_vec = normalize(mat3(transpose(inverse(transform))) * normal); // TODO: move normal-matrix calculation to CPU (once per frame)
 }
