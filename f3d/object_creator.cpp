@@ -43,6 +43,13 @@ object_3d_vi* loader::LoadSTL(const char* path)
             data_file.read((char*)vertex, sizeof(float) * 9); // all 3 vertexes
             data_file.read(rdata, 2); // flush "Attribute byte count"
             model->vertices.insert(model->vertices.end(), vertex, vertex + 9);
+            glm::vec3 a = {vertex[0], vertex[1], vertex[2]}; // normal vector calculation instead use of nv from SLT file
+            glm::vec3 b = {vertex[3], vertex[4], vertex[5]}; // TODO: clean up here
+            glm::vec3 c = {vertex[6], vertex[7], vertex[8]};
+            auto norm_vector = glm::normalize(glm::cross(b - a, c - a));
+            norm_vec[0] = norm_vector.x;
+            norm_vec[1] = norm_vector.y;
+            norm_vec[2] = norm_vector.z;
             model->normals.insert(model->normals.end(), norm_vec, norm_vec + 3); // same normal for each vertice in STL
             model->normals.insert(model->normals.end(), norm_vec, norm_vec + 3);
             model->normals.insert(model->normals.end(), norm_vec, norm_vec + 3);
@@ -59,15 +66,15 @@ object_3d_vi* loader::LoadSTL(const char* path)
 }
 
 void object3d::Prepare( object_3d_vi* model,
-                        glm::u32vec3 position,
+                        glm::vec3 translation,
                         glm::vec3 rotation,
-                        glm::u32vec3 size,
+                        glm::vec3 scale,
                         glm::vec4 color )
 {
-    this->size = size;
-    this->rotation = rotation;
-    this->position = position;
-    this->color = color;
+    this->_translation = translation;
+    this->_rotation = rotation;
+    this->_scale = scale;
+    this->_color = color;
 
     glGenVertexArrays(1, &vao);
 	glBindVertexArray(vao); // bind Vertex Array Object
@@ -98,7 +105,7 @@ void object3d::Prepare( object_3d_vi* model,
     );
     glEnableVertexAttribArray(1);
     nr_of_vertices = model->vertices.size();
-//    delete model; // no more needed, everythinh is in GPU
+    delete model; // no more needed, everythinh is in GPU
 }
 
 void object3d::Draw(const glm::mat4& view_matrix, const glm::vec3& light_pos)
@@ -106,13 +113,15 @@ void object3d::Draw(const glm::mat4& view_matrix, const glm::vec3& light_pos)
     _shader->use();
     // Create transformationmatrix from rotation, size and position(translation)
     // than multiply with view_matrix before pass to GPU
-    glm::mat4 trans = glm::mat4(1.0f);
-    trans = glm::translate(trans, position);
-    trans = f3d::RotationMatrix(rotation) * trans;
-    trans = glm::scale(trans, size);
+    auto trans_mat = glm::mat4(1.0f);
+    trans_mat = glm::translate(trans_mat, _translation);
+    trans_mat = f3d::RotationMatrix(_rotation) * trans_mat;
+    trans_mat = glm::scale(trans_mat, _scale);
+    auto normal_mat = glm::mat3(glm::transpose(glm::inverse(trans_mat))); // transformation matrix for normals
     _shader->setUniform("view", view_matrix);
-    _shader->setUniform("transform", trans);
-    _shader->setUniform("color", color);
+    _shader->setUniform("transform", trans_mat);
+    _shader->setUniform("normal_mat", normal_mat);
+    _shader->setUniform("color", _color);
     _shader->setUniform("light_pos", light_pos);
 
     glBindVertexArray(vao);

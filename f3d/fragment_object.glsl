@@ -17,5 +17,5 @@ void main()
     vec3 diffuse_light = diff * light_color; // diffuse light component
 
     vec3 result = (ambient_light + diffuse_light) * vec3(color);
-	FragColor = vec4(result, 1.0f);
+    FragColor = vec4(result, 1.0f);
 }

@@ -12,6 +12,7 @@
 #include "f3d/scanner.hpp"
 #include "f3d/grid.hpp"
 #include "f3d/object_creator.hpp"
+#include "f3d/material_map.hpp"
 
 #include "f3d/shader.hpp"
 #include "f3d/driver_data.hpp"
@@ -150,7 +151,7 @@ int main()
 	glEnable(GL_DEPTH_TEST); // using z-buffer
 	glEnable(GL_BLEND); // transparency enable
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // ...
-	glEnable(GL_CULL_FACE); // TODO: remove, because scanner uses both sides of textured plane
+	//glEnable(GL_CULL_FACE); // commented, because scanner uses both sides of textured plane
 	glCullFace(GL_FRONT);
 	glFrontFace(GL_CW);
 
@@ -178,7 +179,13 @@ int main()
 		std::to_string(grid1.line_spacing.z) << "\n";
 
 	f3d::shader object_shader("f3d/vertex_object.glsl", "f3d/fragment_object.glsl");
-	f3d::object3d object1(object_shader, f3d::loader::LoadSTL("../two_obj.stl"));
+	f3d::object3d object1(object_shader, f3d::loader::LoadSTL("../two_obj.stl"),
+							{70, 70, 20},
+							{0, 0, 0},
+							{1,1,2});
+
+	f3d::shader voxel_shader("f3d/vertex_mat_map.glsl", "f3d/fragment_object.glsl");
+	f3d::material_map object1_vox(voxel_shader, sc_size, "scene.ui8");
 
 	f3d::data drv_elements("../FAS_test/driver"); // TODO: from cmd line
 	f3d::object_render object_render("f3d/vertex_driver_old.glsl", "f3d/fragment.glsl");
@@ -305,8 +312,9 @@ int main()
 		// render
 		grid1.Draw(camera);
 		object_render.Draw();
-//		scanner1.Draw(camera);
-		object1.Draw(camera, cam_pos);
+		scanner1.Draw(camera);
+		//object1.Draw(camera, cam_pos);
+		object1_vox.Draw(camera, cam_pos);
 
 		// check and call events and swap the buffers
 		glfwSwapBuffers(window);

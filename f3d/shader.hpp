@@ -124,6 +124,10 @@ namespace f3d {
 			glUniformMatrix4fv(glGetUniformLocation(ID, name), 1, GL_FALSE, glm::value_ptr(value));
 		}
 
+		void setUniform(const char* name, const glm::mat3& value) const {
+			glUniformMatrix3fv(glGetUniformLocation(ID, name), 1, GL_FALSE, glm::value_ptr(value));
+		}
+
 		void setUniform(const char* name, const glm::vec4& value) const {
 			glUniform4fv(glGetUniformLocation(ID, name), 1, glm::value_ptr(value));
 		}
@@ -146,6 +150,10 @@ namespace f3d {
 
 		void setUniform(int UID, const glm::mat4& value) const {
 			glUniformMatrix4fv(UID, 1, GL_FALSE, glm::value_ptr(value));
+		}
+
+		void setUniform(int UID, const glm::mat3& value) const {
+			glUniformMatrix3fv(UID, 1, GL_FALSE, glm::value_ptr(value));
 		}
 
 		void setUniform(int UID, const glm::vec4& value) const {
