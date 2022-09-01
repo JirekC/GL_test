@@ -94,11 +94,11 @@ void f3d::material_map::Prepare(glm::u32vec3 scene_size, const char* path, glm::
 {
 	_color = color;
 	vector<float> positions; // positions of non-zero voxels
-	vector<uint8_t> materials; // material indexes for voxels (according to above)
+	vector<float> materials; // material indexes for voxels: 1.0/material_number
     
 	glGenVertexArrays(1, &vao);
 	glBindVertexArray(vao); // 1. bind Vertex Array Object
-	glGenBuffers(3, buff);
+	glGenBuffers(4, buff);
 
 	// vertices
 	glBindBuffer(GL_ARRAY_BUFFER, buff[0]); // copy vertices array to buffer for OpenGL use
@@ -159,7 +159,7 @@ void f3d::material_map::Prepare(glm::u32vec3 scene_size, const char* path, glm::
 						positions.push_back((float)x);
 						positions.push_back((float)y);
 						positions.push_back((float)z);
-						materials.push_back(material);
+						materials.push_back((float)material / 256.0f);
 						nr_of_instances++;
 					}
 				}
@@ -178,6 +178,13 @@ void f3d::material_map::Prepare(glm::u32vec3 scene_size, const char* path, glm::
 	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
 	glVertexAttribDivisor(2, 1); // last arg: 0 = update the content of the vertex attribute each iteration of the vertex shader, 1 = update the content of the vertex attribute when we start to render a new instance, 2... = update the content every 2 instances and so on
 	glEnableVertexAttribArray(2);
+
+	// instances of cube - translations
+	glBindBuffer(GL_ARRAY_BUFFER, buff[3]);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * materials.size(), materials.data(), GL_STATIC_DRAW);
+	glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, sizeof(float), (void*)0);
+	glVertexAttribDivisor(3, 1); // last arg: 0 = update the content of the vertex attribute each iteration of the vertex shader, 1 = update the content of the vertex attribute when we start to render a new instance, 2... = update the content every 2 instances and so on
+	glEnableVertexAttribArray(3);
 }
 
 void f3d::material_map::Draw(const glm::mat4& view_matrix, const glm::vec3& light_pos)
@@ -196,7 +203,6 @@ void f3d::material_map::Draw(const glm::mat4& view_matrix, const glm::vec3& ligh
 //    _shader->setUniform("normal_mat", normal_mat);
    _shader->setUniform("transform", glm::mat4(1.0f)); // transformations are already done in STL2VOX utility
    _shader->setUniform("normal_mat", glm::mat3(1.0f)); // before converting to voxel map
-    _shader->setUniform("color", _color);
     _shader->setUniform("light_pos", light_pos);
 
     glBindVertexArray(vao);

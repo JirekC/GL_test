@@ -184,7 +184,7 @@ int main()
 							{0, 0, 0},
 							{1,1,2});
 
-	f3d::shader voxel_shader("f3d/vertex_mat_map.glsl", "f3d/fragment_object.glsl");
+	f3d::shader voxel_shader("f3d/vertex_mat_map.glsl", "f3d/fragment_mat_map.glsl");
 	f3d::material_map object1_vox(voxel_shader, sc_size, "scene.ui8");
 
 	f3d::data drv_elements("../FAS_test/driver"); // TODO: from cmd line
