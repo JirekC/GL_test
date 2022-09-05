@@ -11,6 +11,6 @@ float s_value;
 
 void main()
 {
-	gl_Position = view * model; // rot, trans, scale ...
-	tex_coord = tex_coord_in; // propagate texture coordinates to fragment shader
+    gl_Position = view * model; // rot, trans, scale ...
+    tex_coord = tex_coord_in; // propagate texture coordinates to fragment shader
 }

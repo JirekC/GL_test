@@ -274,13 +274,13 @@ USERDOMAIN_ROAMINGPROFILE = AUSTIN
 
 build/%.c.o: %.c
 #  recipe to execute (from 'Makefile', line 34):
-	mkdir -p $(dir $@)
-	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
+    mkdir -p $(dir $@)
+    $(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
 build/%.cpp.o: %.cpp
 #  recipe to execute (from 'Makefile', line 39):
-	mkdir -p $(dir $@)
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
+    mkdir -p $(dir $@)
+    $(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
 
 # 2 implicit rules, 0 (0.0%) terminal.
 
@@ -316,7 +316,7 @@ build/GL.exe:
 #  Modification time never checked.
 #  File has not been updated.
 #  recipe to execute (from 'Makefile', line 30):
-	$(CXX) $(OBJS) -o $@ $(LDFLAGS)
+    $(CXX) $(OBJS) -o $@ $(LDFLAGS)
 
 clean:
 #  Phony target (prerequisite of .PHONY).
@@ -324,7 +324,7 @@ clean:
 #  File does not exist.
 #  File has not been updated.
 #  recipe to execute (from 'Makefile', line 45):
-	rm -r $(BUILD_DIR)
+    rm -r $(BUILD_DIR)
 
 # files hash-table stats:
 # Load=7/1024=1%, Rehash=0, Collisions=0/19=0%

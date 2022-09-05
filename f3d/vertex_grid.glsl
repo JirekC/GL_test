@@ -9,6 +9,6 @@ out vec4 vertexColor;
 
 void main()
 {
-	gl_Position = view * model; // rot, trans, scale ...
-	vertexColor = color; // propagate color to fragment shader
+    gl_Position = view * model; // rot, trans, scale ...
+    vertexColor = color; // propagate color to fragment shader
 }

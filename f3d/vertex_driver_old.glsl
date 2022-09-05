@@ -10,10 +10,10 @@ out vec4 vertexColor; // color output to the fragment shader
 
 void main()
 {
-	gl_Position = view * ( vec4(translate.x + model.x,
+    gl_Position = view * ( vec4(translate.x + model.x,
                                 translate.y + model.y,
                                 translate.z + model.z,
                                 1.0f ));
-	//gl_PointSize = 10 * (5 - gl_Position.z); // size of point if GL_POINTS draw style selected
-	vertexColor = color;
+    //gl_PointSize = 10 * (5 - gl_Position.z); // size of point if GL_POINTS draw style selected
+    vertexColor = color;
 }
