@@ -4,20 +4,23 @@
 #include <chrono>
 #include <cmath>
 #include <stdint.h>
+#include <unistd.h> // readlink()
 #include <glad/glad.h> // OpenGL loader
 #include <GLFW/glfw3.h> // OpenGL window & input
 #include <glm/glm.hpp> // OpenGL math (C++ wrap)
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include "nlohmann/json.hpp" // JSON parser for project files
+
 #include "f3d/scanner.hpp"
 #include "f3d/grid.hpp"
 #include "f3d/object_creator.hpp"
 #include "f3d/material_map.hpp"
-
 #include "f3d/shader.hpp"
 #include "f3d/driver_data.hpp"
 #include "f3d/object_render.hpp"
 
+using json = nlohmann::json;
 
 #ifndef M_PI
     #define M_PI 3.14159265358979323846264338327950288
@@ -51,6 +54,69 @@ void cmd_input_thread(void)
         }
     }
     cmd_flag = -1; // mark end-of-work
+}
+
+template<typename T>
+glm::vec<3, T> parse_vec3(json jvec3)
+{
+    glm::vec<3, T> ret_vec;
+    json val;
+
+    if(!jvec3.is_object())
+    {
+        throw std::runtime_error("3D vector not found");
+    }
+    if(!(val = jvec3["x"]).is_number())
+    {
+        throw std::runtime_error("invalid 3D vector format");
+    }
+    ret_vec.x = val;
+    if(!(val = jvec3["y"]).is_number())
+    {
+        throw std::runtime_error("invalid 3D vector format");
+    }
+    ret_vec.y = val;
+    if(!(val = jvec3["z"]).is_number())
+    {
+        throw std::runtime_error("invalid 3D vector format");
+    }
+    ret_vec.z = val;
+
+    return ret_vec;
+}
+
+template<typename T>
+glm::vec<2, T> parse_vec2(json jvec2)
+{
+    glm::vec<2, T> ret_vec;
+    json val;
+
+    if(!jvec2.is_object())
+    {
+        throw std::runtime_error("3D vector not found");
+    }
+    if(!(val = jvec2["x"]).is_number())
+    {
+        throw std::runtime_error("invalid 3D vector format");
+    }
+    ret_vec.x = val;
+    if(!(val = jvec2["y"]).is_number())
+    {
+        throw std::runtime_error("invalid 3D vector format");
+    }
+    ret_vec.y = val;
+
+    return ret_vec;
+}
+
+std::string getexepath()
+{
+    char result[ 1024 ];
+    ssize_t count = readlink( "/proc/self/exe", result, sizeof(result) );
+    std::string path( result, (count > 0) ? count : 0 );
+    size_t found = path.find_last_of("/\\");
+    path = path.substr(0,found);
+    return path;
 }
 
 // processing inputs (from main loop)
@@ -121,8 +187,25 @@ void printProgramInfo(GLuint nProgram)
 }
 
 // main entry :)
-int main()
+int main(int argc, char* argv[])
 {
+    std::string exec_path = getexepath(); // path to executable of this process
+    float dt; // time-step [sec]
+    float dx; // space-step [m]
+    glm::u32vec3 sc_size; // total scene size - for now, one field is supported
+
+    std::vector<f3d::scanner*> scanners;
+    std::vector<f3d::object3d*> models;
+    std::vector<f3d::material_map*> vox_maps;
+
+    if (argc < 2)
+    {
+        std::cerr << "ERR: no input file.\n";
+        std::cerr << "Using: GL [project_file.json]\n";
+        exit(-1);
+    }
+
+    /*** Init OpenGL ***/
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -155,21 +238,164 @@ int main()
     glCullFace(GL_FRONT);
     glFrontFace(GL_CW);
 
-    f3d::shader scanner_shader("f3d/vertex_scanner.glsl", "f3d/fragment_scanner.glsl"); // common shader for all scanners
-    f3d::scanner scanner1(    scanner_shader,
-                            {0,0,128}, // TODO: parse from .json
-                            {0.0f,0.0f,0.0f},
-                            {512, 512},
-                            "../FAS_test/data0.f32", 10);
+    /*** init shaders ***/
+    f3d::shader scanner_shader((exec_path + "/f3d/vertex_scanner.glsl").c_str(), (exec_path + "/f3d/fragment_scanner.glsl").c_str()); // common shader for all scanners
+    f3d::shader grid_shader((exec_path + "/f3d/vertex_grid.glsl").c_str(), (exec_path + "/f3d/fragment.glsl").c_str()); // common grid shader
+    f3d::shader object_shader((exec_path + "/f3d/vertex_object.glsl").c_str(), (exec_path + "/f3d/fragment_object.glsl").c_str()); // common shader for all objects except scanner and woxel maps
+    f3d::shader voxel_shader((exec_path + "/f3d/vertex_mat_map.glsl").c_str(), (exec_path + "/f3d/fragment_mat_map.glsl").c_str()); // common shader for all voxel maps
+
+    /*** Parse .json ***/
+    try {
+        int fcntr, cntr;
+        json jproject, val;
+        std::ifstream project_file;
+        project_file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+
+        // try to open and parse input project-file
+        project_file.open(argv[1]);
+        jproject = json::parse(project_file);
+
+        /*** overal project parameters ***/
+        val = jproject["steps"];
+        if(!val.is_number_unsigned()) throw std::runtime_error("A valid number of simulation steps was not specified");
+        num_frames = val;
+        if(!(val = jproject["dt"]).is_number()) throw std::runtime_error("A valid time-step (dt) was not specified");
+        dt = val;
+        if(!(val = jproject["dx"]).is_number()) throw std::runtime_error("A valid space-step (dx) was not specified");
+        dx = val;
+
+        /*** load fields ***/
+        fcntr = 0; // field index counter
+        for(auto jf : jproject["fields"])
+        {
+            std::cout << "Creating new field: ";
+            if((val = jf["name"]).is_string())
+                std::cout << std::string(val);
+            std::cout << "\n";
+            try
+            {
+                sc_size = parse_vec3<uint32_t>(jf["size"]);
+            }
+            catch(const std::exception& e)
+            {
+                throw std::runtime_error("Field [" + std::to_string(fcntr) + "]: size is not specified:\n" + e.what());
+            }
+
+            /*** create scanners ***/
+            cntr = 0;
+            for( auto jscan : jf["scanners"] )
+            {
+                glm::u32vec3 position;
+                glm::u32vec2 size;
+                glm::vec3 rotation;
+                std::string file_name;
+                uint32_t store_every_nth_frame = 1;
+
+                // parse position, size and rotation
+                try
+                {
+                    position = parse_vec3<uint32_t>(jscan["position"]);
+                    size = parse_vec2<uint32_t>(jscan["size"]);
+                    rotation = parse_vec3<double>(jscan["rotation"]);
+                }
+                catch(const std::exception& e)
+                {
+                    throw std::runtime_error("Field [" + std::to_string(fcntr) + "]: " \
+                        "scanner [" + std::to_string(cntr) + "]: position, size or rotation vector has invalid format");
+                }
+                // try to parse file_name
+                if((val = jscan["out_file"]).is_string())
+                {
+                    file_name = val;
+                }
+                else
+                {
+                    // no file name specified, use some default
+                    file_name = "f" + std::to_string(fcntr) + "s" + std::to_string(cntr) + "data.f32";
+                }
+                // try to parse how many frames to store (default is 1 - every frame)
+                if((val = jscan["store_every_nth_frame"]).is_number_unsigned())
+                {
+                    store_every_nth_frame = val;
+                    if(store_every_nth_frame < 1)
+                        store_every_nth_frame = 1;
+                }
+                auto s = new f3d::scanner(scanner_shader, position, rotation, size, file_name, store_every_nth_frame);
+                scanners.push_back(s);
+                cntr++;
+            }
+
+            /*** create objects from .stl models ***/
+            cntr = 0;
+            for( auto jm : jf["models"] )
+            {
+                std::string path;
+                uint8_t mat_id;
+
+                // parse path
+                if(!(val = jm["path"]).is_string())
+                {
+                    throw std::runtime_error("Field [" + std::to_string(fcntr) + "]: " \
+                        "model [" + std::to_string(cntr) + "]: \"path\" not specified\n");
+                }
+                path = val;
+                // parse material id
+                if(!(val = jm["material_id"]).is_number_unsigned())
+                {
+                    std::cerr << "Field [" + std::to_string(fcntr) + "]: " \
+                        "model [" + std::to_string(cntr) + "]: \"material_id\" not specified - assuming #0\n";
+                    mat_id = 0;
+                }
+                else
+                {
+                    mat_id = val;
+                    if(mat_id > 255)
+                    {
+                        std::cerr  << "Field [" + std::to_string(fcntr) + "]: " \
+                            "model [" + std::to_string(cntr) + "]: \"material_id\" greater than 255 - #0 will be used instead\n";
+                        mat_id = 0;
+                    }
+                }
+                auto o = new f3d::object3d(object_shader, f3d::loader::LoadSTL(path.c_str()),
+                            {0, 0, 0},
+                            {0, 0, 0},
+                            {1, 1, 1},
+                            {(float)mat_id / 8.0, 0, 0, 1});
+                models.push_back(o);
+                cntr++;
+            }
+
+            /*** try to load voxel map (material map) ***/
+            try {
+                // one file for every field, created by FAS -> STL2VOX before simulation
+                auto vm = new f3d::material_map(voxel_shader, sc_size, std::string("F" + std::to_string(fcntr) + ".ui8").c_str());
+                vox_maps.push_back(vm);
+            }
+            catch(const std::exception& e) {
+                // nothing to do
+            }
+
+            fcntr++;
+        }
+
+
+    }
+    catch(const std::exception& e) {
+        std::cerr << "ERR: Preparing scene from file \"" << argv[1] << "\": " << e.what() << '\n';
+        exit(-1);
+    }
+
+    // f3d::scanner scanner1(  scanner_shader,
+    //                         {0,0,128}, // TODO: parse from .json
+    //                         {0.0f,0.0f,0.0f},
+    //                         {512, 512},
+    //                         "../FAS_test/data0.f32", 10);
     
     // adjust move / frame-inc / rotate speed
-    auto sc_size = glm::vec3({512,512,256}); //data.getSceneSize();
     float scene_max_dim = std::max(std::max(sc_size.x, sc_size.y), sc_size.z); // maximal dimmension of scene
     float cameraSpeed = 0.35f * scene_max_dim; // adjust accordingly to scene size TODO: let user to adjust
     float rotationSpeed = M_PI * 0.5f; // 6.28 rad per 4 sec (by arrows on keyboard)
-    num_frames = scanner1.num_frames * scanner1.store_every_nth_frame;
 
-    f3d::shader grid_shader("f3d/vertex_grid.glsl", "f3d/fragment.glsl"); // common grid shader
     f3d::grid grid1(grid_shader);
     grid1.Prepare(sc_size, {10.0f,10.0f,10.0f}); // todo: adjustable grid ?
     // TODO: multiply by "dx" to obtain [m] instead of simulation units
@@ -178,14 +404,12 @@ int main()
         std::to_string(grid1.line_spacing.y) << "\nz: " <<
         std::to_string(grid1.line_spacing.z) << "\n";
 
-    f3d::shader object_shader("f3d/vertex_object.glsl", "f3d/fragment_object.glsl");
-    f3d::object3d object1(object_shader, f3d::loader::LoadSTL("../two_obj.stl"),
-                            {100, 50, 20},
-                            {0, 0, 0},
-                            {2,3,4});
+    // f3d::object3d object1(object_shader, f3d::loader::LoadSTL("../two_obj.stl"),
+    //                         {100, 50, 20}, // TODO: parse from .json
+    //                         {0, 0, 0},
+    //                         {2,3,4});
 
-    f3d::shader voxel_shader("f3d/vertex_mat_map.glsl", "f3d/fragment_mat_map.glsl");
-    f3d::material_map object1_vox(voxel_shader, sc_size, "scene.ui8");
+    // f3d::material_map object1_vox(voxel_shader, sc_size, "scene.ui8"); // TODO: parse from .json
 
     f3d::data drv_elements("../FAS_test/driver"); // TODO: from cmd line
     f3d::object_render object_render("f3d/vertex_driver_old.glsl", "f3d/fragment.glsl");
@@ -300,18 +524,25 @@ int main()
         
         if (last_frame != frame)
         {
-            // not same frame, load new values from file
-            scanner1.load_frame(frame);
+            // not same frame, load new values from files
+            for( int i = 0; i < scanners.size(); i++ ) {
+                scanners[i]->load_frame(frame);
+            }
             last_frame = frame;
         }
 
         // render
         grid1.Draw(camera);
         object_render.Draw();
-        scanner1.Draw(camera);
-        //object1._rotation.x = glfwGetTime();
-        //object1.Draw(camera, cam_pos);
-        object1_vox.Draw(camera, cam_pos);
+        for( int i = 0; i < scanners.size(); i++ ) {
+            scanners[i]->Draw(camera);
+        }
+        // for( int i = 0; i < models.size(); i++ ) {
+        //     models[i]->Draw(camera, cam_pos);
+        // }
+        for( int i = 0; i < vox_maps.size(); i++ ) {
+            vox_maps[i]->Draw(camera, cam_pos);
+        }
 
         // check and call events and swap the buffers
         glfwSwapBuffers(window);

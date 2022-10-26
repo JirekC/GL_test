@@ -1,8 +1,8 @@
 #version 330 core
 
-layout (location = 0) in vec3 model; // vertex
-layout (location = 1) in vec3 normal; // normal vector
-layout (location = 2) in vec3 translate; // offset of model (cube) instance in instanced array
+layout (location = 0) in vec3 model; // coordinates of cube instances
+layout (location = 1) in vec3 normal; // normal vectors for single cube
+layout (location = 2) in vec3 translate; // offset of one cube instance in instanced array
 layout (location = 3) in float material; // material_nr/256.0
 
 uniform mat4 view;
