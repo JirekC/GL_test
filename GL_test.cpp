@@ -17,8 +17,6 @@
 #include "f3d/object_creator.hpp"
 #include "f3d/material_map.hpp"
 #include "f3d/shader.hpp"
-#include "f3d/driver_data.hpp"
-#include "f3d/object_render.hpp"
 
 using json = nlohmann::json;
 
@@ -186,16 +184,45 @@ void printProgramInfo(GLuint nProgram)
     }
 }
 
+// translates material number to color from palette
+glm::vec4 ColorFromMaterial(uint8_t material)
+{
+    glm::vec4 color;
+    const glm::vec4 palette[9] = {  {0.1f, 0.1f, 0.1f, 1.0f}, // mat #0
+                                    {0.0f, 0.0f, 1.0f, 1.0f},
+                                    {0.0f, 1.0f, 0.0f, 1.0f},
+                                    {0.0f, 1.0f, 1.0f, 1.0f},
+                                    {1.0f, 0.0f, 0.0f, 1.0f},
+                                    {1.0f, 0.0f, 1.0f, 1.0f},
+                                    {1.0f, 1.0f, 0.0f, 1.0f},
+                                    {0.8f, 0.8f, 0.8f, 1.0f},
+                                    {0.5f, 0.5f, 1.0f, 1.0f} };
+
+    if(material <= 8) {
+        color = palette[int(material)];
+    } else {
+        color = glm::vec4((float)material / 256.0f, 0.0f, 0.0f, 1.0f);
+    }
+
+    return color;
+}
+
 // main entry :)
 int main(int argc, char* argv[])
 {
     std::string exec_path = getexepath(); // path to executable of this process
     float dt; // time-step [sec]
     float dx; // space-step [m]
-    glm::u32vec3 sc_size; // total scene size - for now, one field is supported
+    glm::u32vec3 sc_size; // total scene size [simulation units / elements] - for now, one field is supported
+    bool drivers_shown = true; // true if drivers has to be rendered
+    bool mat_shown[8]; // true if objects of this material has to be rendered
+    bool vox_map_shown = false;
+    int last_key = 0; // last key of F1..9
 
     std::vector<f3d::scanner*> scanners;
+    std::vector<f3d::object3d*> drivers;
     std::vector<f3d::object3d*> models;
+    std::vector<uint8_t> models_mat; // material of each model
     std::vector<f3d::material_map*> vox_maps;
 
     if (argc < 2)
@@ -203,6 +230,10 @@ int main(int argc, char* argv[])
         std::cerr << "ERR: no input file.\n";
         std::cerr << "Using: GL [project_file.json]\n";
         exit(-1);
+    }
+
+    for(int i = 0; i < sizeof(mat_shown) / sizeof(bool); i++) {
+        mat_shown[i] = true;
     }
 
     /*** Init OpenGL ***/
@@ -274,11 +305,43 @@ int main(int argc, char* argv[])
             std::cout << "\n";
             try
             {
-                sc_size = parse_vec3<uint32_t>(jf["size"]);
+                sc_size = parse_vec3<double>(jf["size"]) * (1.0 / dx);
             }
             catch(const std::exception& e)
             {
                 throw std::runtime_error("Field [" + std::to_string(fcntr) + "]: size is not specified:\n" + e.what());
+            }
+
+            /*** create drivers from .stl models ***/
+            cntr = 0;
+            for( auto jm : jf["drivers"] )
+            {
+                std::string path;
+
+                // parse path
+                if(!(val = jm["model"]).is_string())
+                {
+                    throw std::runtime_error("Field [" + std::to_string(fcntr) + "]: " \
+                        "driver [" + std::to_string(cntr) + "]: \"model\" not specified\n");
+                }
+                path = val;
+                auto o = new f3d::object3d(object_shader, f3d::loader::LoadSTL(path.c_str()),
+                            {0, 0, 0},
+                            {0, 0, 0},
+                            {1.0/dx, 1.0/dx, 1.0/dx}, // use scale to convert from meters to simulation units
+                            ColorFromMaterial(cntr + 1)); // driver's index used as "material" id for colouring
+                drivers.push_back(o);
+                cntr++;
+            }
+
+            /*** try to load voxel map (material map) ***/
+            try {
+                // one file for every field, created by FAS -> STL2VOX before simulation
+                auto vm = new f3d::material_map(voxel_shader, sc_size, std::string("F" + std::to_string(fcntr) + "_drv.ui8").c_str());
+                vox_maps.push_back(vm);
+            }
+            catch(const std::exception& e) {
+                // nothing to do
             }
 
             /*** create scanners ***/
@@ -294,8 +357,8 @@ int main(int argc, char* argv[])
                 // parse position, size and rotation
                 try
                 {
-                    position = parse_vec3<uint32_t>(jscan["position"]);
-                    size = parse_vec2<uint32_t>(jscan["size"]);
+                    position = parse_vec3<double>(jscan["position"]) * (1.0 / dx); // convert from meters to simulation-units
+                    size = parse_vec2<double>(jscan["size"]) * (1.0 / dx);
                     rotation = parse_vec3<double>(jscan["rotation"]);
                 }
                 catch(const std::exception& e)
@@ -359,9 +422,10 @@ int main(int argc, char* argv[])
                 auto o = new f3d::object3d(object_shader, f3d::loader::LoadSTL(path.c_str()),
                             {0, 0, 0},
                             {0, 0, 0},
-                            {1, 1, 1},
-                            {(float)mat_id / 8.0, 0, 0, 1});
+                            {1.0/dx, 1.0/dx, 1.0/dx}, // use scale to convert from meters to simulation units
+                            ColorFromMaterial(mat_id));
                 models.push_back(o);
+                models_mat.push_back(mat_id);
                 cntr++;
             }
 
@@ -377,19 +441,11 @@ int main(int argc, char* argv[])
 
             fcntr++;
         }
-
-
     }
     catch(const std::exception& e) {
         std::cerr << "ERR: Preparing scene from file \"" << argv[1] << "\": " << e.what() << '\n';
         exit(-1);
     }
-
-    // f3d::scanner scanner1(  scanner_shader,
-    //                         {0,0,128}, // TODO: parse from .json
-    //                         {0.0f,0.0f,0.0f},
-    //                         {512, 512},
-    //                         "../FAS_test/data0.f32", 10);
     
     // adjust move / frame-inc / rotate speed
     float scene_max_dim = std::max(std::max(sc_size.x, sc_size.y), sc_size.z); // maximal dimmension of scene
@@ -403,18 +459,6 @@ int main(int argc, char* argv[])
         std::to_string(grid1.line_spacing.x) << "\ny: " <<
         std::to_string(grid1.line_spacing.y) << "\nz: " <<
         std::to_string(grid1.line_spacing.z) << "\n";
-
-    // f3d::object3d object1(object_shader, f3d::loader::LoadSTL("../two_obj.stl"),
-    //                         {100, 50, 20}, // TODO: parse from .json
-    //                         {0, 0, 0},
-    //                         {2,3,4});
-
-    // f3d::material_map object1_vox(voxel_shader, sc_size, "scene.ui8"); // TODO: parse from .json
-
-    f3d::data drv_elements("../FAS_test/driver"); // TODO: from cmd line
-    f3d::object_render object_render("f3d/vertex_driver_old.glsl", "f3d/fragment.glsl");
-    object_render.setPositions(drv_elements.positions);
-    object_render.setColor({ 1.0f,1.0f,0.0f,1.0f }); // yellow
 
     int nbFrames = 0;
     float lastTime = 0.0f;
@@ -509,6 +553,59 @@ int main(int argc, char* argv[])
         else if (glfwGetKey(window, GLFW_KEY_HOME) == GLFW_PRESS) {
             frame += (1 + num_frames / 100);
         }
+        // show / hide maretials #1 .. #8 or voxel-map
+        if(glfwGetKey(window, GLFW_KEY_F1) == GLFW_PRESS) {
+            if(last_key != GLFW_KEY_F1)
+                mat_shown[0] = !mat_shown[0];
+            last_key = GLFW_KEY_F1;
+        }
+        else if(glfwGetKey(window, GLFW_KEY_F2) == GLFW_PRESS) {
+            if(last_key != GLFW_KEY_F2)
+                mat_shown[1] = !mat_shown[1];
+            last_key = GLFW_KEY_F2;
+        }
+        else if(glfwGetKey(window, GLFW_KEY_F3) == GLFW_PRESS) {
+            if(last_key != GLFW_KEY_F3)
+                mat_shown[2] = !mat_shown[2];
+            last_key = GLFW_KEY_F3;
+        }
+        else if(glfwGetKey(window, GLFW_KEY_F4) == GLFW_PRESS) {
+            if(last_key != GLFW_KEY_F4)
+                mat_shown[3] = !mat_shown[3];
+            last_key = GLFW_KEY_F4;
+        }
+        else if(glfwGetKey(window, GLFW_KEY_F5) == GLFW_PRESS) {
+            if(last_key != GLFW_KEY_F5)
+                mat_shown[4] = !mat_shown[4];
+            last_key = GLFW_KEY_F5;
+        }
+        else if(glfwGetKey(window, GLFW_KEY_F6) == GLFW_PRESS) {
+            if(last_key != GLFW_KEY_F6)
+                mat_shown[5] = !mat_shown[5];
+            last_key = GLFW_KEY_F6;
+        }
+        else if(glfwGetKey(window, GLFW_KEY_F7) == GLFW_PRESS) {
+            if(last_key != GLFW_KEY_F7)
+                mat_shown[6] = !mat_shown[6];
+            last_key = GLFW_KEY_F7;
+        }
+        else if(glfwGetKey(window, GLFW_KEY_F8) == GLFW_PRESS) {
+            if(last_key != GLFW_KEY_F8)
+                mat_shown[7] = !mat_shown[7];
+            last_key = GLFW_KEY_F8;
+        }
+        else if(glfwGetKey(window, GLFW_KEY_F11) == GLFW_PRESS) {
+            if(last_key != GLFW_KEY_F11)
+                drivers_shown = !drivers_shown;
+            last_key = GLFW_KEY_F11;
+        }
+        else if(glfwGetKey(window, GLFW_KEY_F12) == GLFW_PRESS) {
+            if(last_key != GLFW_KEY_F12)
+                vox_map_shown = !vox_map_shown;
+            last_key = GLFW_KEY_F12;
+        } else {
+            last_key = 0;
+        }
 
         glm::vec3 direction;
         direction.x = cos(cam_yaw) * cos(cam_pitch);
@@ -520,7 +617,6 @@ int main(int argc, char* argv[])
         glGetIntegerv(GL_VIEWPORT, &viewport.x); // get viewport position and size
         glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)viewport.z / viewport.w, 1.0f, 2.0f * scene_max_dim);
         camera = projection * camera;
-        object_render.setView(camera);
         
         if (last_frame != frame)
         {
@@ -533,15 +629,33 @@ int main(int argc, char* argv[])
 
         // render
         grid1.Draw(camera);
-        object_render.Draw();
         for( int i = 0; i < scanners.size(); i++ ) {
             scanners[i]->Draw(camera);
         }
-        // for( int i = 0; i < models.size(); i++ ) {
-        //     models[i]->Draw(camera, cam_pos);
-        // }
-        for( int i = 0; i < vox_maps.size(); i++ ) {
-            vox_maps[i]->Draw(camera, cam_pos);
+        if(vox_map_shown) {
+            for( int i = 0; i < vox_maps.size(); i++ ) {
+                vox_maps[i]->Draw(camera, cam_pos);
+            }
+        } else {
+            if(drivers_shown) {
+                for( int i = 0; i < drivers.size(); i++) {
+                    drivers[i]->Draw(camera, cam_pos);
+                }
+            }
+            for( int i = 0; i < models.size(); i++ ) {
+                uint8_t mat = models_mat[i];
+                if(mat == 0) {
+                    continue;
+                }
+                if(mat <= 8) {
+                    if(mat_shown[--mat]) {
+                        models[i]->Draw(camera, cam_pos);
+                    }
+                }
+                else {
+                    models[i]->Draw(camera, cam_pos); // for now: models with mat# > 8 always shown
+                }
+            }
         }
 
         // check and call events and swap the buffers
